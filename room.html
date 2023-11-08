@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+		<canvas class="webgl"></canvas>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r124/three.min.js"></script>
+		<script src="https://unpkg.com/three@0.126.0/examples/js/loaders/GLTFLoader.js"></script>
+		<script src="https://unpkg.com/three@0.126.0/examples/js/controls/OrbitControls.js"></script>
+		<script>
+			const canvas = document.querySelector('.webgl')
+			const scene = new THREE.Scene()
+			const textureLoader = new THREE.TextureLoader()
+			const sizes = {
+				width: window.innerWidth,
+				height: window.innerHeight
+			}
+
+			// Base camera
+			const camera = new THREE.PerspectiveCamera(10, sizes.width / sizes.height, 0.1, 100)
+			camera.position.x = 18
+			camera.position.y = 8
+			camera.position.z = 20
+			scene.add(camera)
+
+			//Controls
+			const controls = new THREE.OrbitControls(camera, canvas)
+			controls.enableDamping = true
+			controls.enableZoom = true
+			controls.enablePan = false
+			controls.minDistance = 20
+			controls.maxDistance = 40
+			controls.minPolarAngle = Math.PI / 4
+			controls.maxPolarAngle = Math.PI / 2
+			controls.minAzimuthAngle = -Math.PI / 80
+			controls.maxAzimuthAngle = Math.PI / 2.5
+
+			// Renderer
+			const renderer = new THREE.WebGLRenderer({
+				canvas: canvas,
+				antialias: true,
+				alpha: true
+			})
+
+			renderer.setSize(sizes.width, sizes.height)
+			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+			renderer.outputEncoding = THREE.sRGBEncoding
+
+			// Materials
+			const bakedTexture = textureLoader.load('baked.jpg')
+			bakedTexture.flipY = false
+			bakedTexture.encoding = THREE.sRGBEncoding
+
+			const bakedMaterial = new THREE.MeshBasicMaterial({
+				map: bakedTexture,
+				side: THREE.DoubleSide,
+			})
+
+			//Loader
+			const loader = new THREE.GLTFLoader()
+			loader.load('model.glb',
+				(gltf) => {
+					const model = gltf.scene
+					model.traverse(child => child.material = bakedMaterial)
+					scene.add(model)
+				},
+				(xhr) => {
+					console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+				}
+			)
+			// 创建标注文字
+			const fontloader = new THREE.FontLoader();
+			let textMesh;
+
+			fontloader.load('helvetiker_regular.typeface.json', function(font) {
+				const textGeometry = new THREE.TextGeometry('2333', {
+					font: font,
+					size: 0.2,
+					height: 0.1,
+					curveSegments: 12,
+					bevelEnabled: false
+				});
+
+				const textMaterial = new THREE.MeshBasicMaterial({
+					color: 0xffffff
+				});
+				textMesh = new THREE.Mesh(textGeometry, textMaterial);
+				textMesh.position.set(0.5, -1, 0); // 设置文字位置
+
+				scene.add(textMesh); // 将文字添加到场景中
+
+			});
+			// 监听鼠标点击事件
+			window.addEventListener('click', (event) => {
+
+				event.preventDefault();
+
+				// 计算鼠标点击位置的归一化设备坐标
+				var mouse = new THREE.Vector2();
+				mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+				mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+				// 通过鼠标位置和相机位置构建射线
+				var raycaster = new THREE.Raycaster();
+				raycaster.setFromCamera(mouse, camera);
+
+				// 计算射线和场景中所有物体的交点
+				var intersects = raycaster.intersectObjects(scene.children);
+				console.log(intersects)
+				// 如果有交点且交点为标注文字，则执行标注文字的点击事件
+				if (intersects.length > 0 && intersects[0].object === textMesh) {
+					alert('来了老弟'); // 在这里执行需要的交互操作
+				}
+
+			}, false);
+			window.addEventListener('resize', () => {
+				sizes.width = window.innerWidth
+				sizes.height = window.innerHeight
+				camera.aspect = sizes.width / sizes.height
+				camera.updateProjectionMatrix()
+				renderer.setSize(sizes.width, sizes.height)
+				renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+			})
+			// Animation
+			const tick = () => {
+				controls.update()
+				if (textMesh) {
+					textMesh.lookAt(camera.position); // 让文字始终朝向相机
+				}
+				renderer.render(scene, camera)
+				window.requestAnimationFrame(tick)
+			}
+
+
+
+			tick()
+		</script>
+		<style>
+			*,
+			*::after,
+			*::before {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+				outline: none;
+			}
+
+			body {
+				overflow: hidden;
+				background-color: #949494;
+				cursor: grab;
+			}
+
+			.webgl {
+				position: fixed;
+				top: 0;
+				left: 0;
+			}
+		</style>
+	</body>
+
+</html>
