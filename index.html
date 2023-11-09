@@ -50,7 +50,7 @@
 			renderer.outputEncoding = THREE.sRGBEncoding
 
 			// Materials
-			const bakedTexture = textureLoader.load('baked.jpg')
+			const bakedTexture = textureLoader.load('http://s3u3kuc33.hb-bkt.clouddn.com/baked.jpg')
 			bakedTexture.flipY = false
 			bakedTexture.encoding = THREE.sRGBEncoding
 
@@ -61,7 +61,7 @@
 
 			//Loader
 			const loader = new THREE.GLTFLoader()
-			loader.load('model.glb',
+			loader.load('http://s3u3kuc33.hb-bkt.clouddn.com/model.glb',
 				(gltf) => {
 					const model = gltf.scene
 					model.traverse(child => child.material = bakedMaterial)
@@ -75,7 +75,7 @@
 			const fontloader = new THREE.FontLoader();
 			let textMesh;
 
-			fontloader.load('helvetiker_regular.typeface.json', function(font) {
+			fontloader.load('http://s3u3kuc33.hb-bkt.clouddn.com/helvetiker_regular.typeface.json', function(font) {
 				const textGeometry = new THREE.TextGeometry('2333', {
 					font: font,
 					size: 0.2,
